@@ -1,5 +1,5 @@
 #!/bin/bash
-# Export macOS notifications to date-based folder
+# Export macOS notifications to OpenClaw memory directory
 # Part of: https://github.com/gift-is-coding/macos-notification-reader
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -7,8 +7,17 @@ NOTIF_SCRIPT="$SCRIPT_DIR/read_notifications.py"
 TODAY=$(date +%Y-%m-%d)
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 
-# Default output to current directory's output folder
-OUTPUT_DIR="${OUTPUT_DIR:-./output/$TODAY}"
+# Default output to OpenClaw memory directory (can be overridden via OUTPUT_DIR)
+# Format: memory/YYYY-MM-DD/computer_io/notification/
+if [ -z "$OUTPUT_DIR" ]; then
+    # Try to detect OpenClaw workspace
+    if [ -d "$HOME/.openclaw/workspace/memory" ]; then
+        OUTPUT_DIR="$HOME/.openclaw/workspace/memory/$TODAY/computer_io/notification"
+    else
+        OUTPUT_DIR="./output/$TODAY/computer_io/notification"
+    fi
+fi
+
 mkdir -p "$OUTPUT_DIR"
 
 OUTPUT_FILE="$OUTPUT_DIR/notifications-$TIMESTAMP.md"

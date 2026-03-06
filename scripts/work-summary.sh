@@ -9,8 +9,15 @@ TODAY=$(date +%Y-%m-%d)
 TS=$(date +%Y%m%d-%H%M%S)
 LOOKBACK_MINUTES="${WORK_LOOKBACK_MINUTES:-180}"
 
-# Default output to current directory's output folder
-OUTPUT_DIR="${OUTPUT_DIR:-./output/$TODAY/computer_io/notification}"
+# Default output to OpenClaw memory directory
+if [ -z "$OUTPUT_DIR" ]; then
+    if [ -d "$HOME/.openclaw/workspace/memory" ]; then
+        OUTPUT_DIR="$HOME/.openclaw/workspace/memory/$TODAY/computer_io/notification"
+    else
+        OUTPUT_DIR="./output/$TODAY/computer_io/notification"
+    fi
+fi
+
 mkdir -p "$OUTPUT_DIR"
 
 TMP_RAW="/tmp/work_notif_raw_$TS.txt"
@@ -28,7 +35,6 @@ raw_file = Path(sys.argv[1])
 out_file = Path(sys.argv[2])
 lookback = sys.argv[3]
 
-# Sanitized: replace company-specific keywords with generic ones
 work_apps = {
     'Teams': 'teams',
     'Outlook': 'outlook',
@@ -66,7 +72,6 @@ for ln in lines:
 
     # WeChat: only keep work-related notifications
     if selected == 'wechat':
-        # Sanitized: generic work keywords
         if not re.search(r'project|meeting|review|approval|budget|team|review|urgent', msg, re.I):
             continue
 

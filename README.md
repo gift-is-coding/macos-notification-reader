@@ -28,6 +28,12 @@ Simply put: This tool exports your macOS notifications to Markdown files, allowi
 
 ## 🚀 快速开始 / Quick Start
 
+### 前置要求 / Prerequisites
+
+- macOS 系统 / macOS system
+- Python 3.8+ (`python3 --version` 检查)
+- OpenClaw 已安装
+
 ### 1. 克隆项目 / Clone the project
 
 ```bash
@@ -35,7 +41,13 @@ git clone https://github.com/gift-is-coding/macos-notification-reader.git
 cd macos-notification-reader
 ```
 
-### 2. 首次运行（需要授权）/ First run (requires authorization)
+### 2. 给脚本执行权限 / Make scripts executable
+
+```bash
+chmod +x scripts/*.sh
+```
+
+### 3. 首次运行（需要授权）/ First run (requires authorization)
 
 ```bash
 # 导出当天所有通知 / Export all notifications for the day
@@ -44,13 +56,45 @@ cd macos-notification-reader
 
 首次运行时，macOS 会弹窗请求「通知访问权限」，点击允许即可。/ On first run, macOS will prompt for notification access permission - click Allow.
 
-### 3. 查看输出 / Check output
+### 4. 查看输出 / Check output
 
 通知会导出到 `output/` 目录：/ Notifications are exported to the `output/` directory:
 
 ```
 output/2026-03-06/notifications-20260306-114500.md
 ```
+
+---
+
+## ⚙️ OpenClaw 集成配置 / OpenClaw Integration Setup
+
+### 方式一：配置定时任务（推荐）/ Method 1: Setup Cron Job (Recommended)
+
+在 OpenClaw 中配置定时自动抓取通知：
+
+1. 编辑 OpenClaw 配置，添加 cron 任务：
+
+```bash
+# 方式 A：通过 OpenClaw 命令行（如果支持）
+openclaw cron add "*/30 * * * *" "./scripts/export-notification.sh"
+
+# 方式 B：手动添加 crontab
+crontab -e
+```
+
+2. 添加以下行（每 30 分钟抓取一次）：
+
+```cron
+*/30 * * * * cd /path/to/macos-notification-reader && ./scripts/export-notification.sh >> /tmp/notif_cron.log 2>&1
+```
+
+### 方式二：放入 OpenClaw Skills 目录 / Method 2: Put in OpenClaw Skills Directory
+
+```bash
+cp -r macos-notification-reader ~/.openclaw/workspace/skills/macos-notification-reader
+```
+
+然后在 OpenClaw 配置中设置定时调用。
 
 ---
 
@@ -61,6 +105,9 @@ output/2026-03-06/notifications-20260306-114500.md
 ```bash
 # 默认提取过去 3 小时的工作通知 / Default: extract work notifications from last 3 hours
 ./scripts/work-summary.sh
+
+# 自定义时间范围 / Custom time range
+WORK_LOOKBACK_MINUTES=60 ./scripts/work-summary.sh
 ```
 
 ---
@@ -69,9 +116,17 @@ output/2026-03-06/notifications-20260306-114500.md
 
 | 变量 / Variable | 默认值 / Default | 说明 / Description |
 |-----------------|------------------|-------------------|
-| `OUTPUT_DIR` | `./output` | 输出目录 / Output directory |
+| `OUTPUT_DIR` | `./output` | 输出目录（建议设为 OpenClaw 的 memory 目录）/ Output directory (recommend setting to OpenClaw's memory directory) |
 | `NOTIF_LOOKBACK_MINUTES` | `40` | 导出通知的时间窗口（分钟）/ Notification time window (minutes) |
 | `WORK_LOOKBACK_MINUTES` | `180` | 工作摘要时间窗口（分钟）/ Work summary time window (minutes) |
+
+### 高级：输出到 OpenClaw Memory 目录 / Advanced: Output to OpenClaw Memory
+
+如果想让 OpenClaw 自动读取通知，可以直接输出到 memory 目录：
+
+```bash
+OUTPUT_DIR=~/.openclaw/workspace/memory/$(date +%Y-%m-%d)/computer_io/notification ./scripts/work-summary.sh
+```
 
 ---
 
@@ -80,23 +135,6 @@ output/2026-03-06/notifications-20260306-114500.md
 - ✅ 数据保存在本地，不上传任何服务器 / Data stored locally, not uploaded to any server
 - ✅ 只读取通知标题和内容，不读取附件 / Only reads notification titles and content, not attachments
 - ✅ 支持一键清理：`rm -rf output/` / One-click cleanup: `rm -rf output/`
-
----
-
-## 🤖 与 OpenClaw 集成 / Integration with OpenClaw
-
-这个项目本身就是为 OpenClaw 设计的！/ This project is designed for OpenClaw!
-
-### 集成步骤 / Integration steps:
-
-1. 把项目放到 OpenClaw 的 skills 目录：/ Place the project in OpenClaw's skills directory:
-   ```bash
-   cp -r macos-notification-reader ~/.openclaw/workspace/skills/
-   ```
-
-2. 在 OpenClaw 配置中添加 cron job 定时抓取 / Add cron job in OpenClaw config for periodic capture
-
-3. 开始对话，OpenClaw 就会"知道"谁在找你了 🎉 / Start chatting, and OpenClaw will "know" who's reaching out to you
 
 ---
 
@@ -129,6 +167,13 @@ macos-notification-reader/
 # 快速调试 / Quick debug
 python3 ./scripts/read_notifications.py --minutes 5 --output /tmp/debug.txt
 cat /tmp/debug.txt
+```
+
+### Q: 权限被拒绝？/ Q: Permission denied?
+
+```bash
+# 确保脚本有执行权限 / Make sure scripts are executable
+chmod +x scripts/*.sh
 ```
 
 ---

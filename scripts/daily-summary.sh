@@ -1,14 +1,21 @@
 #!/bin/bash
 # Daily Notification Summary
-# Run daily at 23:05 to write daily notification summary to memory
+# Run daily to write daily notification summary to memory
 # Part of: https://github.com/gift-is-coding/macos-notification-reader
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NOTIF_SCRIPT="$SCRIPT_DIR/read_notifications.py"
 TODAY=$(date +%Y-%m-%d)
 
-# Default output directory (customizable via OUTPUT_DIR env var)
-MEMORY_DIR="${MEMORY_DIR:-./output}"
+# Default to OpenClaw memory directory
+if [ -z "$MEMORY_DIR" ]; then
+    if [ -d "$HOME/.openclaw/workspace/memory" ]; then
+        MEMORY_DIR="$HOME/.openclaw/workspace/memory"
+    else
+        MEMORY_DIR="./output"
+    fi
+fi
+
 OUTPUT_FILE="/tmp/notif_summary_$TODAY.txt"
 
 mkdir -p "$MEMORY_DIR"
@@ -86,7 +93,7 @@ else:
 with open(memory_file, 'w') as f:
     f.write(existing)
 
-print(f"Updated / 已更新: {memory_file}")
+print(f"Updated: {memory_file}")
 print(f"Today's notifications: {len(apps)} items")
 EOF
 
