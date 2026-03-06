@@ -1,14 +1,17 @@
 #!/bin/bash
 # Export macOS notifications to date-based folder
+# Part of: https://github.com/gift-is-coding/macos-notification-reader
 
-NOTIF_SCRIPT="/Users/wutianfu/.openclaw/workspace/skills/macos-notification-reader/scripts/read_notifications.py"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+NOTIF_SCRIPT="$SCRIPT_DIR/read_notifications.py"
 TODAY=$(date +%Y-%m-%d)
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 
-OUTPUT_DIR="/Users/wutianfu/.openclaw/workspace/memory/$TODAY/computer_io/notification"
+# Default output to current directory's output folder
+OUTPUT_DIR="${OUTPUT_DIR:-./output/$TODAY}"
 mkdir -p "$OUTPUT_DIR"
 
-OUTPUT_FILE="$OUTPUT_DIR/$TIMESTAMP.md"
+OUTPUT_FILE="$OUTPUT_DIR/notifications-$TIMESTAMP.md"
 
 # 读取最近一段时间的通知（默认 40 分钟，可通过环境变量覆盖）
 LOOKBACK_MINUTES="${NOTIF_LOOKBACK_MINUTES:-40}"
@@ -27,7 +30,7 @@ temp_file = f"/tmp/notif_{timestamp}.txt"
 
 if not os.path.exists(temp_file) or os.path.getsize(temp_file) == 0:
     with open(output_file, 'w', encoding='utf-8') as f:
-        f.write(f"# macOS Notifications\n- Date: {today}\n- Timestamp: {timestamp}\n\n今日无通知记录\n")
+        f.write(f"# macOS Notifications\n- Date: {today}\n- Timestamp: {timestamp}\n\nNo notifications recorded today.\n")
     print(f"Exported to {output_file} (no notifications)")
     exit(0)
 
@@ -42,8 +45,8 @@ with open(output_file, 'w', encoding='utf-8') as f:
     f.write(f"- Date: {today}\n")
     f.write(f"- Timestamp: {timestamp}\n")
     f.write(f"- Total: {len([l for l in lines if '|' in l])} items\n\n")
-    f.write(f"## 通知内容\n\n")
-    f.write(f"| 时间 | 应用 | 内容 |\n")
+    f.write(f"## 通知内容 / Notifications\n\n")
+    f.write(f"| 时间 / Time | 应用 / App | 内容 / Content |\n")
     f.write(f"|------|------|------|\n")
     
     for line in lines:
@@ -59,3 +62,4 @@ with open(output_file, 'w', encoding='utf-8') as f:
 os.remove(temp_file)
 
 print(f"Exported to {output_file}")
+PYEOF

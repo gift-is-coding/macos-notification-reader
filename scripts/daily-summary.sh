@@ -1,21 +1,27 @@
 #!/bin/bash
-# Daily Notification Summary - 每天 23:05 执行，将当日通知摘要写入 daily memory
+# Daily Notification Summary
+# Run daily at 23:05 to write daily notification summary to memory
+# Part of: https://github.com/gift-is-coding/macos-notification-reader
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NOTIF_SCRIPT="$SCRIPT_DIR/read_notifications.py"
-MEMORY_DIR="/Users/wutianfu/.openclaw/workspace/memory"
 TODAY=$(date +%Y-%m-%d)
+
+# Default output directory (customizable via OUTPUT_DIR env var)
+MEMORY_DIR="${MEMORY_DIR:-./output}"
 OUTPUT_FILE="/tmp/notif_summary_$TODAY.txt"
 
-# 读取今日通知（最近 24 小时）
+mkdir -p "$MEMORY_DIR"
+
+# Read today's notifications (last 24 hours)
 python3 $NOTIF_SCRIPT --hours 24 > "$OUTPUT_FILE" 2>/dev/null
 
 if [ ! -s "$OUTPUT_FILE" ]; then
-    echo "今日无通知记录"
+    echo "No notifications recorded today."
     exit 0
 fi
 
-# 统计各应用通知数量
+# Count notifications by app
 python3 << EOF
 import re
 from collections import Counter
@@ -23,7 +29,7 @@ from collections import Counter
 with open("$OUTPUT_FILE", 'r') as f:
     content = f.read()
 
-# 解析通知
+# Parse notifications
 apps = []
 messages = []
 for line in content.strip().split('\n'):
@@ -36,13 +42,13 @@ for line in content.strip().split('\n'):
             messages.append(msg)
 
 if not apps:
-    print("无有效通知")
+    print("No valid notifications")
     exit(0)
 
-# 统计
+# Count
 app_count = Counter(apps)
 
-# 写入每日 memory
+# Write to daily memory
 memory_file = "$MEMORY_DIR/$TODAY.md"
 
 existing = ""
@@ -52,26 +58,27 @@ try:
 except:
     pass
 
-if "## 今日通知" in existing:
+# Chinese + English
+if "## 今日通知 / Today's Notifications" in existing:
     import re
-    pattern = r"## 今日通知[\s\S]*?(?=\n## |\Z)"
-    new_section = f"""## 今日通知
+    pattern = r"## 今日通知 / Today's Notifications[\s\S]*?(?=\n## |\Z)"
+    new_section = f"""## 今日通知 / Today's Notifications
 
-- 条数：{len(apps)}
-- 应用分布：{', '.join([f'{k}({v})' for k,v in app_count.most_common(10)])}"""
+- 条数 / Count: {len(apps)}
+- 应用分布 / Apps: {', '.join([f'{k}({v})' for k,v in app_count.most_common(10)])}"""
     existing = re.sub(pattern, new_section, existing)
 else:
     new_section = f"""
 
-## 今日通知
+## 今日通知 / Today's Notifications
 
-- 条数：{len(apps)}
-- 应用分布：{', '.join([f'{k}({v})' for k,v in app_count.most_common(10)])}
+- 条数 / Count: {len(apps)}
+- 应用分布 / Apps: {', '.join([f'{k}({v})' for k,v in app_count.most_common(10)])}
 
-### 重要通知
+### 重要通知 / Important
 
 """
-    # 取前5条非系统通知
+    # Take top 5 non-system notifications
     important = [m for m in messages if len(m) > 10][:5]
     new_section += '\n'.join([f"- {m[:100]}" for m in important])
     existing += f"\n{new_section}"
@@ -79,8 +86,8 @@ else:
 with open(memory_file, 'w') as f:
     f.write(existing)
 
-print(f"已更新 {memory_file}")
-print(f"今日通知: {len(apps)} 条")
+print(f"Updated / 已更新: {memory_file}")
+print(f"Today's notifications: {len(apps)} items")
 EOF
 
 rm -f "$OUTPUT_FILE"

@@ -1,19 +1,21 @@
 #!/bin/bash
 # Work Notification Summary
-# 用法：WORK_LOOKBACK_MINUTES=180 ./work-summary.sh
+# Usage: WORK_LOOKBACK_MINUTES=180 ./work-summary.sh
+# Part of: https://github.com/gift-is-coding/macos-notification-reader
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NOTIF_SCRIPT="$SCRIPT_DIR/read_notifications.py"
-WORKSPACE="/Users/wutianfu/.openclaw/workspace"
 TODAY=$(date +%Y-%m-%d)
 TS=$(date +%Y%m%d-%H%M%S)
 LOOKBACK_MINUTES="${WORK_LOOKBACK_MINUTES:-180}"
 
-TMP_RAW="/tmp/work_notif_raw_$TS.txt"
-OUT_DIR="$WORKSPACE/memory/$TODAY/computer_io/notification"
-OUT_MD="$OUT_DIR/work-summary-$TS.md"
+# Default output to current directory's output folder
+OUTPUT_DIR="${OUTPUT_DIR:-./output/$TODAY/computer_io/notification}"
+mkdir -p "$OUTPUT_DIR"
 
-mkdir -p "$OUT_DIR"
+TMP_RAW="/tmp/work_notif_raw_$TS.txt"
+OUT_MD="$OUTPUT_DIR/work-summary-$TS.md"
+
 python3 "$NOTIF_SCRIPT" --minutes "$LOOKBACK_MINUTES" --output "$TMP_RAW" 2>/dev/null
 
 python3 - "$TMP_RAW" "$OUT_MD" "$LOOKBACK_MINUTES" << 'PYEOF'
@@ -26,6 +28,7 @@ raw_file = Path(sys.argv[1])
 out_file = Path(sys.argv[2])
 lookback = sys.argv[3]
 
+# Sanitized: replace company-specific keywords with generic ones
 work_apps = {
     'Teams': 'teams',
     'Outlook': 'outlook',
@@ -36,6 +39,7 @@ work_apps = {
 action_kw = [
     '待办', 'todo', 'action item', 'follow up', 'follow-up', '请', '截止', 'deadline',
     'review', '审批', 'approve', '确认', '提醒', '会议', 'meeting', 'sync', 'blocker',
+    'request', 'need', 'required', 'urgent', 'important',
 ]
 
 lines = []
@@ -60,16 +64,17 @@ for ln in lines:
             selected = v
             break
 
-    # 微信只收工作群/工作关键词的通知
+    # WeChat: only keep work-related notifications
     if selected == 'wechat':
-        if not re.search(r'联想|Lenovo|项目|会议|CTO|Anwar|Amu|审批|财务|预算|研发|架构', msg, re.I):
+        # Sanitized: generic work keywords
+        if not re.search(r'project|meeting|review|approval|budget|team|review|urgent', msg, re.I):
             continue
 
     if selected:
         by_app[selected].append((t, msg))
         all_work.append((t, selected, msg))
 
-# 去重（同 app + msg）
+# Deduplicate
 seen = set()
 uniq = []
 for t, a, m in all_work:
@@ -79,7 +84,7 @@ for t, a, m in all_work:
     seen.add(key)
     uniq.append((t, a, m))
 
-# 待处理项识别
+# Extract action items
 pending = []
 for t, a, m in uniq:
     mm = m.lower()
@@ -87,29 +92,29 @@ for t, a, m in uniq:
         pending.append((t, a, m))
 
 out = []
-out.append('# 工作通知摘要')
-out.append(f'- Lookback: 过去 {lookback} 分钟')
-out.append(f'- 总工作通知: {len(uniq)} 条')
+out.append('# Work Notification Summary / 工作通知摘要')
+out.append(f'- Time Range: 过去 {lookback} 分钟 / Last {lookback} minutes')
+out.append(f'- Total Work Notifications: {len(uniq)} 条 / items')
 out.append('')
-out.append('## 渠道分布')
+out.append('## 渠道分布 / Channel Distribution')
 out.append(f"- Teams: {len(by_app.get('teams', []))}")
 out.append(f"- Outlook: {len(by_app.get('outlook', []))}")
-out.append(f"- WeChat(疑似工作相关): {len(by_app.get('wechat', []))}")
+out.append(f"- WeChat (工作相关 / Work-related): {len(by_app.get('wechat', []))}")
 out.append('')
-out.append('## 待处理事项（自动提取）')
+out.append('## 待处理事项 / Action Items (自动提取 / Auto-extracted)')
 if pending:
     for t, a, m in pending[:20]:
         out.append(f"- [{t}] ({a}) {m[:180]}")
 else:
-    out.append('- 暂未识别到明确待处理项')
+    out.append('- 暂未识别到明确待处理项 / No clear action items identified')
 
 out.append('')
-out.append('## 最近工作通知（去重后）')
+out.append('## 最近工作通知 / Recent Work Notifications (去重后 / Deduplicated)')
 if uniq:
     for t, a, m in uniq[:30]:
         out.append(f"- [{t}] ({a}) {m[:180]}")
 else:
-    out.append('- 无')
+    out.append('- 无 / None')
 
 out_file.write_text('\n'.join(out) + '\n', encoding='utf-8')
 print(str(out_file))
