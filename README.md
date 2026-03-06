@@ -28,14 +28,26 @@ memory/YYYY-MM-DD/
 
 ---
 
-## 🚀 安装
+## 🚀 安装方式
 
-### 前置要求
-- macOS 系统
-- Python 3.8+ (`python3 --version` 检查)
-- OpenClaw 已安装并运行
+### 方式一：NPM 全局安装（推荐 ✅）
 
-### 步骤 1：放入 OpenClaw Skills 目录
+```bash
+# 一键安装
+npm install -g openclaw-macos-notification-reader
+
+# 首次运行授权
+openclaw-notif
+
+# 工作摘要模式
+openclaw-work-summary
+```
+
+安装后，命令会全局可用，无需手动复制到 skills 目录。
+
+---
+
+### 方式二：手动安装
 
 ```bash
 # 克隆项目

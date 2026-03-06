@@ -1,8 +1,12 @@
 {
-  "name": "macos-notification-reader",
+  "name": "openclaw-macos-notification-reader",
   "version": "0.1.0",
   "description": "Read macOS notifications and generate work summaries for OpenClaw",
-  "license": "MIT",
+  "main": "index.js",
+  "bin": {
+    "openclaw-notif": "./scripts/export-notification.sh",
+    "openclaw-work-summary": "./scripts/work-summary.sh"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/gift-is-coding/macos-notification-reader"
@@ -14,12 +18,13 @@
     "ai-memory",
     "productivity"
   ],
-  "scripts": {
-    "export": "./scripts/export-notification.sh",
-    "summary": "./scripts/work-summary.sh",
-    "test": "python3 ./scripts/read_notifications.py --minutes 5 --output /tmp/test.txt && cat /tmp/test.txt"
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
   },
-  "dependencies": {
-    "python3": ">=3.8"
+  "dependencies": {},
+  "scripts": {
+    "test": "python3 ./scripts/read_notifications.py --minutes 5 --output /tmp/test.txt"
   }
 }

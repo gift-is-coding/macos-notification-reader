@@ -30,12 +30,24 @@ memory/YYYY-MM-DD/
 
 ## 🚀 Installation
 
-### Prerequisites
-- macOS system
-- Python 3.8+ (`python3 --version` to check)
-- OpenClaw installed and running
+### Method 1: NPM Global Install (Recommended ✅)
 
-### Step 1: Put in OpenClaw Skills Directory
+```bash
+# One-click install
+npm install -g openclaw-macos-notification-reader
+
+# First run for authorization
+openclaw-notif
+
+# Work summary mode
+openclaw-work-summary
+```
+
+After installation, commands are globally available without manual copying.
+
+---
+
+### Method 2: Manual Install
 
 ```bash
 # Clone the project
